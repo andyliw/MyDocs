@@ -35,12 +35,12 @@ rpm -ivh rabbitmq-server-3.7.8.rc.3-1.el7.noarch.rpm
 * 下载
 
 访问`http://www.rabbitmq.com/community-plugins.html`，下载最新的安装包。
-例如：`rabbitmq_routing_node_stamp-20171201-3.7.x.ez`
+例如：`rabbitmq_delayed_message_exchange-20171201-3.7.x.ez`
 
 * 安装
 
 ```shell
-cp rabbitmq_routing_node_stamp-20171201-3.7.x.ez /usr/lib/rabbitmq/lib/rabbitmq_server-3.7.5/plugins
+cp rabbitmq_delayed_message_exchange-20171201-3.7.x.ez /usr/lib/rabbitmq/lib/rabbitmq_server-3.7.5/plugins
 
 rabbitmq-plugins enable rabbitmq_delayed_message_exchange
 ```
