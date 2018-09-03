@@ -1,73 +1,38 @@
-# Hadoop 集群安装和配置
+# Hadoop 安装和配置
 
 ## 一、安装
 
-### 1、用户设置
+### 1、下载
 
-```
-# 创建用户组
-groupadd -g 102 hadoopgroup
-# 创建用户
-useradd -d /opt/hadoop -u 10201 -g 102 hadoop
-# 设置用户密码
-passwd hadoop
-```
+去Apache官方下载。
 
-### 2、hosts设置
-
-```
-192.168.10.157  hadoop1
-192.168.10.158  hadoop2
-192.168.10.160  hadoop3
-```
-
-### 3、免密设置
-
-```
-# 切换用户
-su hadoop
-# 创建SSH秘钥，一路回车下去
-ssh-keygen -t rsa
-# 发送到目标机器
-ssh-copy-id hostname
-```
-
-### 4、ftp工具安装
-
-```
-# 安装
-yum -y install vsftpd
-# 启动
-systemctl start vsftpd.service
-# 停止
-systemctl stop vsftpd.service
-# 重启
-systemctl restart vsftpd.service
-```
-
-### 5、Java安装
-
-[详见](./java-install)
-
-### 6、Hadoop安装
+### 2、解压安装
 
 ```
 tar -zxvf hadoop-3.1.1.tar.gz
 mv hadoop-3.1.1 /opt/hadoop
 ```
 
-### 7、环境变量
+### 3、环境变量
 
 ```
-export JAVA_HOME=/usr/java/jdk1.8.0_181-amd64
-export CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/jre/lib
 export HADOOP_HOME=/opt/hadoop/hadoop-3.1.1
-export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:JAVA_HOME/bin:$PATH
+export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
 ```
 
 ## 二、配置
 
-### 1、hadoop-env.sh
+### 1、创建目录
+
+```
+su hadoop
+mkdir -p /data/hadoop/name
+mkdir -p /data/hadoop/data
+mkdir -p /data/hadoop/log
+mkdir -p /data/hadoop/tmp
+```
+
+### 2、hadoop-env.sh
 
 ```
 export JAVA_HOME=/usr/java/jdk1.8.0_181-amd64
@@ -79,13 +44,13 @@ export YARN_NODEMANAGER_USER=root
 export YARN_RESOURCEMANAGER_USER=root
 ```
 
-### 2、core-site.xml
+### 3、core-site.xml
 
 ```
 <configuration>
   <property>
     <name>hadoop.tmp.dir</name>
-    <value>/opt/hadoop/hadoop-3.1.1/tmp</value>
+    <value>/data/hadoop/tmp</value>
   </property>
   <property>
     <name>fs.defaultFS</name>
@@ -94,7 +59,7 @@ export YARN_RESOURCEMANAGER_USER=root
 </configuration>
 ```
 
-### 3、yarn-site.xml
+### 4、yarn-site.xml
 
 ```
 <configuration>
@@ -114,7 +79,7 @@ export YARN_RESOURCEMANAGER_USER=root
 </configuration>
 ```
 
-### 4、mapred-site.xml
+### 5、mapred-site.xml
 
 ```
 <configuration>
@@ -134,13 +99,21 @@ export YARN_RESOURCEMANAGER_USER=root
 </configuration>
 ```
 
-### 5、hdfs-site.xml
+### 6、hdfs-site.xml
 
 ```
 <configuration>
   <property>
     <name>dfs.namenode.http-address</name>
     <value>hadoop1:50070</value>
+  </property>
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>/data/hadoop/name</value>
+  </property>
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>/data/hadoop/data</value>
   </property>
   <property>
     <name>dfs.replication</name>
@@ -157,18 +130,30 @@ export YARN_RESOURCEMANAGER_USER=root
 </configuration>
 ```
 
-### 6、格式化
+### 7、格式化
 
 ```
 hdfs namenode -format
 ```
 
-### 7、启动集群
+### 8、启动集群
 
 ```
 cd $HADOOP_HOME/sbin
 ./start-all.sh
 ```
 
+## 三、管理
 
+使用`jps`查看进程
+
+### 1、NameNode
+
+### 2、DataNode
+
+### 3、SecondaryNameNode
+
+### 4、TaskTracker
+
+### 5、JobTracker
 
