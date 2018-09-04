@@ -1,22 +1,23 @@
-# Hadoop 单机模式安装
+# Hadoop 安装和配置
 
 ## 一、安装
 
-### 1、解压安装
+### 1、下载
+
+去Apache官方下载。
+
+### 2、解压安装
 
 ```
 tar -zxvf hadoop-3.1.1.tar.gz
 mv hadoop-3.1.1 /opt/hadoop
 ```
 
-### 2、环境变量
+### 3、环境变量
 
 ```
-# su hadoop
-# vim ~/.bashrc
-# source ~/.bashrc
-
 export HADOOP_HOME=/opt/hadoop/hadoop-3.1.1
+export HADOOP_PREFIX=$HADOOP_HOME
 export HADOOP_MAPRED_HOME=$HADOOP_HOME
 export HADOOP_COMMON_HOME=$HADOOP_HOME
 export HADOOP_HDFS_HOME=$HADOOP_HOME
@@ -24,17 +25,6 @@ export YARN_HOME=$HADOOP_HOME
 export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
 export HADOOP_INSTALL=$HADOOP_HOME
 export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
-```
-
-### 3、修改配置文件
-
-```
-# vim $HADOOP_HOME/etc/hadoop/hadoop-env.sh
-
-#!/usr/bin/env bash
-export HADOOP_NAMENODE_OPTS=" -Xms1024m -Xmx1024m -XX:UseParallelGC"
-export HADOOP_DATANODE_OPTS=" -Xms1024m -Xmx1024m"
-export HADOOP_LOG_DIR=/data/hadoop/logs
 ```
 
 ## 二、配置
@@ -45,17 +35,15 @@ export HADOOP_LOG_DIR=/data/hadoop/logs
 su hadoop
 mkdir -p /data/hadoop/name
 mkdir -p /data/hadoop/data
-mkdir -p /data/hadoop/logs
+mkdir -p /data/hadoop/log
 mkdir -p /data/hadoop/tmp
 ```
 
 ### 2、hadoop-env.sh
 
 ```
-# vim $HADOOP_HOME/etc/hadoop/hadoop-env.sh
-
-# 加在开头
 export JAVA_HOME=/usr/java/jdk1.8.0_181-amd64
+
 export HADOOP_NAMENODE_OPTS=" -Xms1024m -Xmx1024m -XX:UseParallelGC"
 export HADOOP_DATANODE_OPTS=" -Xms1024m -Xmx1024m"
 export HADOOP_LOG_DIR=/data/hadoop/logs
@@ -89,9 +77,9 @@ export HADOOP_LOG_DIR=/data/hadoop/logs
     <value>mapreduce_shuffle</value>
   </property>
   <property>
+    <!-- 关闭内存检测，虚拟机需要，不配会报错-->
     <name>yarn.nodemanager.veme-check-enabled</name>
     <value>false</value>
-    <description>关闭内存检测，虚拟机需要，不配会报错</description>
   </property>
 </configuration>
 ```
@@ -125,24 +113,43 @@ export HADOOP_LOG_DIR=/data/hadoop/logs
     <value>hadoop1:50070</value>
   </property>
   <property>
-    <name>dfs.replication</name>
-    <value>1</value>
-    <description>数据的备份数量，单机模式设置为1</description>
-  </property>
-  <property>
     <name>dfs.namenode.name.dir</name>
-    <value>file:///data/hadoop/name</value>
-    <description>namenode的存储目录</description>
+    <value>/data/hadoop/name</value>
   </property>
   <property>
     <name>dfs.datanode.data.dir</name>
-    <value>file:///data/hadoop/data</value>
-    <description>datanode的存储目录</description>
+    <value>/data/hadoop/data</value>
+  </property>
+  <property>
+    <name>dfs.replication</name>
+    <value>3</value>
+  </property>
+  <property>
+    <name>dfs.permissions.enabled</name>
+    <value>false</value>
+  </property>
+  <property>
+    <name>dfs.blocksize</name>
+    <value>134217728</value>
   </property>
 </configuration>
 ```
 
-### 7、格式化
+### 7、workers
+
+```
+# vim workers
+hadoop1
+hadoop2
+hadoop3
+
+# 快速配置
+echo 'hadoop1' >> workers
+echo 'hadoop2' >> workers
+echo 'hadoop3' >> workers
+```
+
+### 8、格式化
 
 ```
 hdfs namenode -format
@@ -158,9 +165,30 @@ cd $HADOOP_HOME/sbin
 
 ```
 # 启动
-./start-dfs.sh
+./start-all.sh
 # 停止
-./stop-dfs.sh
+./stop-all.sh
+```
+
+```
+hadoop1# jps
+64320 Jps
+62577 SecondaryNameNode
+62261 NameNode
+62841 ResourceManager
+62954 NodeManager
+62380 DataNode
+
+hadoop2# jps
+59636 Jps
+59466 NodeManager
+59036 SecondaryNameNode
+58845 DataNode
+
+hadoop3# jps
+59093 Jps
+58641 NodeManager
+58494 DataNode
 ```
 
 ### Web控制台
@@ -172,4 +200,17 @@ http://192.168.10.110:8088
 http://192.168.10.110:50070
 ```
 
+## 其它
+
+使用`jps`查看进程
+
+### 1、NameNode
+
+### 2、DataNode
+
+### 3、SecondaryNameNode
+
+### 4、TaskTracker
+
+### 5、JobTracker
 

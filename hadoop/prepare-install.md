@@ -4,9 +4,12 @@
 
 |IP             |System  |Hostname |User  |
 |:--------------|:-------|:--------|:-----|
-|192.168.10.157 |CentOS7 |hadoop1  |hadoop|
-|192.168.10.158 |CentOS7 |hadoop2  |hadoop|
-|192.168.10.160 |CentOS7 |hadoop3  |hadoop|
+|192.168.10.110 |CentOS7 |hadoop1  |hadoop|
+|192.168.10.113 |CentOS7 |hadoop2  |hadoop|
+|192.168.10.112 |CentOS7 |hadoop3  |hadoop|
+|192.168.10.114 |CentOS7 |hadoop4  |hadoop|
+|192.168.10.115 |CentOS7 |hadoop5  |hadoop|
+|192.168.10.117 |CentOS7 |hadoop6  |hadoop|
 
 ## 二、安装系统
 
@@ -17,9 +20,11 @@
 ### 2、hosts设置
 
 ```
-192.168.10.157  hadoop1
-192.168.10.158  hadoop2
-192.168.10.160  hadoop3
+192.168.10.110  hadoop1
+192.168.10.113  hadoop2
+192.168.10.112  hadoop3
+192.168.10.114  hadoop4
+192.168.10.115  hadoop5
 ```
 
 ### 3、用户设置
@@ -33,11 +38,13 @@ useradd -d /opt/hadoop -u 10201 -g 102 hadoop
 passwd hadoop
 ```
 
-### 4、数据目录
+### 4、创建目录
 
 ```
 mkdir -p /data
+mkdir -p /opt/hadoop
 chown -R hadoop:hadoop /data
+chown -R hadoop:hadoop /opt/hadoop
 ```
 
 ### 5、免密设置
@@ -64,6 +71,14 @@ ssh-keygen -t rsa
 ssh-copy-id hostname
 ```
 
+### 6、sudo
+
+```
+# vim /etc/sudoers
+
+hadoop  ALL=NOPASSWD:ALL
+```
+
 ## 三、安装依赖
 
 ### 1、ftp工具安装
@@ -83,12 +98,5 @@ systemctl restart vsftpd.service
 
 [详见](../centos7/java-install)
 
-### 3、环境变量
-
-```
-export JAVA_HOME=/usr/java/jdk1.8.0_181-amd64
-export CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/jre/lib
-export PATH=JAVA_HOME/bin:$PATH
-```
 
 

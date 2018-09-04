@@ -2,19 +2,22 @@
 
 ## 一、安装
 
-### 1、系统环境
-
-|IP             |Hostname |User  |
-|:--------------|:--------|:-----|
-|192.168.10.157 |hadoop1  |hadoop|
-|192.168.10.158 |hadoop2  |hadoop|
-|192.168.10.160 |hadoop3  |hadoop|
-
-### 2、下载安装
+### 1、解压安装
 
 ```
 tar -zxvf zookeeper-3.4.13.tar.gz
 mv zookeeper-3.4.13 /opt/hadoop
+```
+
+### 2、环境变量
+
+```
+# su hadoop
+# vim ~/.bashrc
+
+# zookeeper
+export ZOOKEEPER_HOME=/opt/hadoop/zookeeper-3.4.13
+PATH=$ZOOKEEPER_HOME/bin:$PATH
 ```
 
 ### 3、数据目录
@@ -24,7 +27,24 @@ mkdir -p /data/zookeeper/data
 mkdir -p /data/zookeeper/logs
 ```
 
-### 4、修改配置
+### 4、myid
+
+```
+touch /data/zookeeper/data/myid
+echo '{id}' > /data/zookeeper/data/myid
+# ID 就是123按序写入
+```
+
+### 5、zookeeper-env.sh
+
+```
+#!/usr/bin/env bash
+
+export ZOO_LOG_DIR=/data/zookeeper/logs
+export ZOO_LOG4J_PROP=INFO,ROLLINGFILE
+```
+
+### 6、zoo.cfg
 
 ```
 # $ZOOKEEPER_HOME/conf/zoo.cfg
@@ -32,12 +52,12 @@ mkdir -p /data/zookeeper/logs
 tickTime=2000
 initLimit=5
 syncLimit=2
-dataDir=/data/zookepper/data
-dataLogDir=/data/zookepper/logs
+dataDir=/data/zookeeper/data
+dataLogDir=/data/zookeeper/logs
 clientPort=2181
-server.1=hadoop1:2888:3888
-server.2=hadoop2:2888:3888
-server.3=hadoop3:2888:3888
+server.1=hadoop3:2888:3888
+server.2=hadoop4:2888:3888
+server.3=hadoop5:2888:3888
 maxClientCnxns=60
 minSessionTimeout=4000
 maxSessionTimeout=300000
@@ -55,14 +75,6 @@ maxSessionTimeout=300000
 # maxSessionTimeout：最大的客户端session超时时间（单位是毫秒）
 ```
 
-### 5、配置ID
-
-```
-touch /data/zookeeper/data/myid
-echo '{id}' > /data/zookeeper/data/myid
-# ID 就是123按序写入
-```
-
 ## 二、管理
 
 ### 1、启停管理
@@ -77,7 +89,33 @@ cd $ZOOKEEPER_HOME/bin
 ./zhServer.sh stop
 ```
 
-### 2、进入命令行
+### 2、注册服务
+
+```
+# vim /usr/lib/systemd/system/zookeeper.service
+
+[Unit]
+Description=Zookeeper Service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=hadoop
+Group=hadoop
+SyslogIdentifier=hadoop
+ExecStart=/opt/hadoop/zookeeper-3.4.13/bin/zkServer.sh start
+ExecStop=/opt/hadoop/zookeeper-3.4.13/bin/zkServer.sh stop
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+# 注册服务&启动服务
+# systemctl enable zookeeper.service
+# systemctl start zookeeper.service
+```
+
+### 3、客户端
 
 ```
 cd $ZOOKEEPER_HOME/bin
