@@ -2,7 +2,7 @@
 
 ## 一、版本
 
-Hadoop 不能选择最新版本（有坑），2.7的版本比较稳定，而且HBase的最新版本(2.1.0)依赖的Hadoop版本为2.7.4。
+Hadoop 不要选择最新版本（有坑），2.7的版本比较稳定，而且HBase的最新版本(2.1.0)依赖的Hadoop版本为2.7.4。
 Zookeeper、HBase、Spark版本可选较新的稳定版。
 
 ```
@@ -169,7 +169,7 @@ export HADOOP_HDFS_HOME=$HADOOP_HOME
 export YARN_HOME=$HADOOP_HOME
 export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
 export HADOOP_INSTALL=$HADOOP_HOME
-export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
 ```
 
 ### 5、HBase
@@ -205,7 +205,7 @@ tar -zxvf spark-2.3.1-bin-hadoop2.7.tgz -C /opt/hadoop
 
 # Spark
 export SPARK_HOME=/opt/hadoop/spark-2.3.1
-export PATH=$PATH:$SPARK_HOME/bin
+export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 ```
 
 ## 五、Zookeeper配置启动
@@ -493,9 +493,17 @@ yarn-site.xml
     <value>mapreduce_shuffle</value>
   </property>
   <property>
+    <name>yarn.nodemanager.peme-check-enabled</name>
+    <value>false</value>
+  </property>
+  <property>
     <!-- 关闭内存检测，虚拟机需要，不配会报错-->
     <name>yarn.nodemanager.veme-check-enabled</name>
     <value>false</value>
+  </property>
+  <property>
+    <name>yarn.nodemanager.veme-pmem-ratio</name>
+    <value>4</value>
   </property>
   <property>
     <name>yarn.log-aggregation.enable</name>
@@ -589,14 +597,16 @@ hadoop-daemon.sh start datanode
 # hadoop1
 # 启动Yarn
 start-yarn.sh
+# 关闭Yarn
+stop-yarn.sh
 
 # hadoop2
 # 启动RM
 yarn-daemon.sh start resourcemanager
-
-# 其它
 # 关闭RM
 yarn-daemon.sh stop resourcemanager
+
+# 其它
 # 启动NM
 yarn-daemon.sh start nodemanager
 # 关闭NM
@@ -605,5 +615,139 @@ yarn-daemon.sh stop nodemanager
 yarn rmadmin -getServiceState <rm-id>
 ```
 
+管理页面：
 
+```
+http://hadoop1:8088
+http://hadoop2:8088
+```
 
+## HBase配置启动
+
+### 1、创建目录
+
+```
+mkdir -p /data/hbase/data
+mkdir -p /data/hbase/logs
+mkdir -p /data/hbase/tmp
+```
+
+### 2、修改配置
+
+hbase-env.sh
+
+```
+export JAVA_HOME=/usr/java/jdk1.8.0_181-amd64
+export HBASE_CLASSPATH=/opt/hadoop/hadoop-2.7.7/etc/hadoop
+export HBASE_MANAGES_ZK=false
+export HBASE_LOG_DIR=/data/hbase/logs
+```
+
+hbase-site.xml
+
+```
+<configuration>
+  <property>
+    <name>hbase.rootdir</name>
+    <value>hdfs://ygxt/hbase</value>
+  </property>
+  <property>
+    <name>hbase.cluster.distributed</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>hadoop3:2181,hadoop4:2181,hadoop5:2181</value>
+  </property>
+</configuration>
+```
+
+### 3、启停管理
+
+按规划先启动HMaster，再启动HRegionServer。
+
+```
+# 启/停 Master
+hbase-daemon.sh start master
+hbase-daemon.sh stop master
+
+# 启/停 RegionServer
+hbase-daemon.sh start regionserver
+hbase-daemon.sh stop regionserver
+```
+
+管理界面：
+
+```
+http://hadoop1:16010
+http://hadoop2:16010
+```
+
+### 4、命令测试
+
+```
+# hbase shell
+
+# 创建表
+create 't_user','cf'
+# 插数据
+put 't_user','row1','cf:name','jack'
+# 查数据
+scan 't_user'
+```
+
+## Spark配置启动
+
+### 1、创建目录
+
+```
+
+```
+
+### 2、修改配置
+
+spark-env.sh
+
+```
+export JAVA_HOME=/usr/java/jdk1.8.0_181-amd64
+export SCALA_HOME=/usr/share/scala
+export HADOOP_HOME=/opt/hadoop/hadoop-2.7.7
+export HADOOP_CONF_DIR=/opt/hadoop/hadoop-2.7.7/etc/hadoop
+export YARN_CONF_DIR=/opt/hadoop/hadoop-2.7.7/etc/hadoop
+export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=hadoop3:2181,hadoop4:2181,hadoop5:2181 -Dspark.deploy.zookeeper.dir=/spark"
+```
+
+slaves
+
+```
+hadoop3
+hadoop4
+hadoop5
+```
+
+### 3、启停管理
+
+按规划先启动HMaster，再启动HRegionServer。
+
+```
+# 启/停 Master
+hbase-daemon.sh start master
+hbase-daemon.sh stop master
+
+# 启/停 RegionServer
+hbase-daemon.sh start regionserver
+hbase-daemon.sh stop regionserver
+```
+
+管理界面：
+
+```
+http://hadoop1:16010
+http://hadoop2:16010
+```
+
+### 4、发布测试
+
+```
+spark-submit --class org.apache.spark.examples.SparkPi --master spark://{hostname}:7077 --total-executor-cores 4 /opt/hadoop/spark-2.3.1/examples/jars/spark-examples_2.11-2.3.1.jar 100
+```
